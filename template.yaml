@@ -1,18 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Template for Put and Delete S3 Object
 
 Parameters:
   BucketName:
     Type: String
-    Description: Sample S3 Bucket Name
 
   PutLambdaImageUri:
     Type: String
-    Description: ECR Image URI for Put S3 Lambda Function
 
   DeleteLambdaImageUri:
     Type: String
-    Description: ECR Image URI for Delete S3 Lambda Function
 
 Resources:
   # ====================
@@ -21,7 +17,6 @@ Resources:
 
   Bucket:
     Type: AWS::S3::Bucket
-    Description: Sample S3 Bucket
     Properties:
       BucketName: !Ref BucketName
       AccessControl: Private
@@ -37,7 +32,6 @@ Resources:
 
   StateMachine:
     Type: AWS::StepFunctions::StateMachine
-    Description: Sample State Machine
     Properties:
       DefinitionString: !Sub
         - |-
@@ -81,7 +75,6 @@ Resources:
 
   PutLambda:
     Type: AWS::Lambda::Function
-    Description: Put S3 Lambda Function
     Properties:
       Role: !GetAtt LambdaRole.Arn
       PackageType: Image
@@ -93,7 +86,6 @@ Resources:
 
   DeleteLambda:
     Type: AWS::Lambda::Function
-    Description: Delete S3 Lambda Function
     Properties:
       Role: !GetAtt LambdaRole.Arn
       PackageType: Image
@@ -109,7 +101,6 @@ Resources:
 
   LambdaRole:
     Type: AWS::IAM::Role
-    Description: Role for Lambda Function
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -127,7 +118,6 @@ Resources:
 
   StateMachineRole:
     Type: AWS::IAM::Role
-    Description: Role for State Machine
     Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
