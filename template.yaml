@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for Put and Delete S3 Object
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Sample S3 Bucket Name
+
+  PutLambdaImageUri:
+    Type: String
+    Description: ECR Image URI for Put S3 Lambda Function
+
+  DeleteLambdaImageUri:
+    Type: String
+    Description: ECR Image URI for Delete S3 Lambda Function
+
+Resources:
+  # ====================
+  # S3 Buckets
+  # ====================
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    Description: Sample S3 Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+  # ====================
+  # Step Functions
+  # ====================
+
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Description: Sample State Machine
+    Properties:
+      DefinitionString: !Sub
+        - |-
+          {
+            "Comment": "Put and Delete S3 Object",
+            "StartAt": "Put",
+            "States": {
+                "Put": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke",
+                    "Parameters": {
+                        "Payload.$": "$",
+                        "FunctionName": "${PutLambdaArn}"
+                    },
+                    "Next": "Wait",
+                    "OutputPath": "$.Payload"
+                },
+                "Wait": {
+                    "Type": "Wait",
+                    "Seconds": 60,
+                    "Next": "Delete"
+                },
+                "Delete": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke",
+                    "Parameters": {
+                        "Payload.$": "$",
+                        "FunctionName": "${DeleteLambdaArn}"
+                    },
+                    "End": true
+                }
+            }
+          }
+        - PutLambdaArn: !GetAtt PutLambda.Arn
+          DeleteLambdaArn: !GetAtt DeleteLambda.Arn
+      RoleArn: !GetAtt StateMachineRole.Arn
+
+  # ====================
+  # Lambda Functions
+  # ====================
+
+  PutLambda:
+    Type: AWS::Lambda::Function
+    Description: Put S3 Lambda Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      PackageType: Image
+      Code:
+        ImageUri: !Ref PutLambdaImageUri
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref Bucket
+
+  DeleteLambda:
+    Type: AWS::Lambda::Function
+    Description: Delete S3 Lambda Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      PackageType: Image
+      Code:
+        ImageUri: !Ref DeleteLambdaImageUri
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref Bucket
+
+  # ====================
+  # Roles
+  # ====================
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Description: Role for Lambda Function
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  StateMachineRole:
+    Type: AWS::IAM::Role
+    Description: Role for State Machine
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: "*"
