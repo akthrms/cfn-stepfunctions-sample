@@ -138,3 +138,16 @@ Resources:
                 Action:
                   - lambda:InvokeFunction
                 Resource: "*"
+
+  # ====================
+  # EventBridge Rules
+  # ====================
+
+  StateMachineRule:
+    Type: AWS::Events::Rule
+    Properties: 
+      ScheduleExpression: rate(5 minute)
+      State: ENABLED
+      Targets: 
+        - Arn: !GetAtt StateMachine.Arn
+          Id: !Ref StateMachine

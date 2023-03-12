@@ -1,5 +1,9 @@
 # CFnのサンプル（Step Functions）
 
+## 構成図
+
+![構成図](./img/template.png)
+
 ## ECRにログイン
 
 ```sh
