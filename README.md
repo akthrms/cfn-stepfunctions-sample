@@ -27,7 +27,7 @@ $ aws cloudformation create-stack \
     --stack-name <STACK_NAME> \
     --template-body file://template.yaml \
     --parameters ParameterKey=BucketName,ParameterValue=<BUCKET_NAME> \
-    --parameters ParameterKey=PutLambdaImageUri,ParameterValue=<PUT_REPOSITORY_NAME>:latest \
-    --parameters ParameterKey=DeleteLambdaImageUri,ParameterValue=<DELETE_REPOSITORY_NAME>:latest \
+                 ParameterKey=PutLambdaImageUri,ParameterValue=<PUT_IMAGE_URI>:latest \
+                 ParameterKey=DeleteLambdaImageUri,ParameterValue=<DELETE_IMAGE_URI>:latest \
     --capabilities CAPABILITY_NAMED_IAM
 ```

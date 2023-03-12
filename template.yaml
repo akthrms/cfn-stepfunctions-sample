@@ -96,6 +96,20 @@ Resources:
           BUCKET_NAME: !Ref Bucket
 
   # ====================
+  # EventBridge Rules
+  # ====================
+
+  StateMachineEventsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(5 minutes)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt StateMachine.Arn
+          Id: !GetAtt StateMachine.Name
+          RoleArn: !GetAtt EventsRuleRole.Arn
+
+  # ====================
   # Roles
   # ====================
 
@@ -130,7 +144,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: StatesExecutionPolicy
+        - PolicyName: LambdaExecutionPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -139,15 +153,25 @@ Resources:
                   - lambda:InvokeFunction
                 Resource: "*"
 
-  # ====================
-  # EventBridge Rules
-  # ====================
-
-  StateMachineRule:
-    Type: AWS::Events::Rule
-    Properties: 
-      ScheduleExpression: rate(5 minute)
-      State: ENABLED
-      Targets: 
-        - Arn: !GetAtt StateMachine.Arn
-          Id: !Ref StateMachine
+  EventsRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: StateMachineExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: "*"
